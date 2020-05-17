@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using ConsoleTables;
 using Microsoft.Extensions.Configuration;
 
 namespace Natch
@@ -28,19 +29,35 @@ namespace Natch
             }
 
             var tasks = new List<Task>();
+            var results = new ConcurrentBag<TranscriptionResult>();
 
             var timer = new Stopwatch();
             timer.Start();
 
             foreach (var value in Enumerable.Range(0, int.Parse(config["workers"])))
             {
-                tasks.Add(Worker.Work(workQueue, value, config));
+                tasks.Add(Worker.Work(workQueue, config, results));
             }
 
             await Task.WhenAll(tasks);
 
             timer.Stop();
-            Console.WriteLine($"Transcribed {files.Count()} files in {timer.ElapsedMilliseconds / 1000} seconds.");
+            if (bool.Parse(config["demoMode"]))
+            {
+                var totalFilesize = 0d;
+                Console.WriteLine(TextConstants.TranscriptionComplete);
+                var table = new ConsoleTable("File", "Size (MB)", "Transcription Latency (ms)");
+                foreach (var result in results)
+                {
+                    table.AddRow(result.Filename, Math.Round(result.Filesize, 2), result.TranscriptionLatency);
+                    totalFilesize += result.Filesize;
+                }
+                table.AddRow("TOTAL", Math.Round(totalFilesize, 2), timer.ElapsedMilliseconds);
+                table.Configure(o => o.EnableCount = false);
+                table.Write();
+            }
+            else
+                Console.WriteLine($"Handled {files.Count()} files in {timer.ElapsedMilliseconds / 1000} seconds.");
         }
     }
 }

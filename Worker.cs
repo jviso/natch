@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -9,10 +10,11 @@ using Microsoft.Extensions.Configuration;
 
 public class Worker
 {
-    public static async Task Work(ConcurrentQueue<string> workQueue, int workerId, IConfigurationRoot config)
+    public static async Task Work(ConcurrentQueue<string> workQueue, IConfigurationRoot config, ConcurrentBag<TranscriptionResult> results)
     {
         using (var httpClient = new HttpClient())
         {
+            var timer = new Stopwatch();
             while (workQueue.TryDequeue(out string audioFilename))
             {
                 var request = new HttpRequestMessage()
@@ -31,7 +33,9 @@ public class Worker
                     request.Content = new ByteArrayContent(bytes);
 
                     Console.WriteLine($"Sending file {fileId} to Deepgram Brain...");
+                    timer.Start();
                     var response = await httpClient.SendAsync(request);
+                    timer.Stop();
                     Console.WriteLine($"Received transcript for file {fileId} from Deepgram Brain.");
 
                     var transcript = "";
@@ -48,6 +52,12 @@ public class Worker
                     else transcript = await response.Content.ReadAsStringAsync();
 
                     await writer.WriteAsync(transcript);
+                    results.Add(new TranscriptionResult
+                    { 
+                        Filename = fileId,
+                        Filesize = bytes.Length / 1_048_576d,
+                        TranscriptionLatency = timer.ElapsedMilliseconds
+                    });
                 }
             }
         }
