@@ -33,6 +33,7 @@ public class Worker
                     request.Content = new ByteArrayContent(bytes);
 
                     Console.WriteLine($"Sending file {fileId} to Deepgram Brain...");
+                    timer.Reset();
                     timer.Start();
                     var response = await httpClient.SendAsync(request);
                     timer.Stop();
