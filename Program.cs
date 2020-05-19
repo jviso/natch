@@ -57,6 +57,7 @@ namespace Natch
                 table.AddRow($"TOTAL ({results.Count} files)", Math.Round(totalFilesize, 2), totalDuration.ToString("g"), timer.ElapsedMilliseconds);
                 table.Configure(o => o.EnableCount = false);
                 table.Write();
+                Console.WriteLine($"⟹    Transcribed {totalDuration.ToString("g")} of audio in {timer.ElapsedMilliseconds / 1000d} seconds: {Math.Round(totalDuration.TotalMilliseconds / timer.ElapsedMilliseconds, 0)}x speed-up");
             }
             else
                 Console.WriteLine($"Handled {files.Count()} files in {timer.ElapsedMilliseconds / 1000} seconds.");
