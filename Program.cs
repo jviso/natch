@@ -31,18 +31,21 @@ namespace Natch
             var tasks = new List<Task>();
             var results = new ConcurrentBag<TranscriptionResult>();
 
+            var timer = new Stopwatch();
+            timer.Start();
             foreach (var value in Enumerable.Range(0, int.Parse(config["workers"])))
             {
                 tasks.Add(Worker.Work(workQueue, config, results));
             }
 
             await Task.WhenAll(tasks);
+            timer.Stop();
 
             if (bool.Parse(config["demoMode"]))
             {
                 var totalFilesize = 0d;
                 var totalDuration = TimeSpan.Zero;
-                var totalLatency = 0L;
+                var totalLatency = timer.ElapsedMilliseconds;
                 var table = new ConsoleTable("File", "Size (MB)", "Duration", "Transcription Latency (ms)", "Realtime Factor");
 
                 foreach (var result in results)
@@ -52,7 +55,6 @@ namespace Natch
 
                     totalFilesize += result.FilesizeInMegabytes;
                     totalDuration = totalDuration.Add(result.AudioDuration);
-                    totalLatency += result.TranscriptionLatency;
                 }
 
                 var totalSpeedup = Math.Round(totalDuration.TotalMilliseconds / totalLatency, 0);
