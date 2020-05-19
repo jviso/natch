@@ -6,4 +6,5 @@ public class TranscriptionResult
     public double FilesizeInMegabytes { get; set; }
     public long TranscriptionLatency { get; set; }
     public TimeSpan AudioDuration { get; set; }
+    public double RealtimeSpeedup { get; set; }
 }

@@ -31,9 +31,6 @@ namespace Natch
             var tasks = new List<Task>();
             var results = new ConcurrentBag<TranscriptionResult>();
 
-            var timer = new Stopwatch();
-            timer.Start();
-
             foreach (var value in Enumerable.Range(0, int.Parse(config["workers"])))
             {
                 tasks.Add(Worker.Work(workQueue, config, results));
@@ -41,26 +38,30 @@ namespace Natch
 
             await Task.WhenAll(tasks);
 
-            timer.Stop();
             if (bool.Parse(config["demoMode"]))
             {
                 var totalFilesize = 0d;
                 var totalDuration = TimeSpan.Zero;
-                Console.WriteLine(TextConstants.TranscriptionComplete);
-                var table = new ConsoleTable("File", "Size (MB)", "Duration", "Transcription Latency (ms)");
+                var totalLatency = 0L;
+                var table = new ConsoleTable("File", "Size (MB)", "Duration", "Transcription Latency (ms)", "Realtime Factor");
+
                 foreach (var result in results)
                 {
-                    table.AddRow(result.Filename, Math.Round(result.FilesizeInMegabytes, 2), result.AudioDuration.ToString("g"), result.TranscriptionLatency);
+                    table.AddRow(result.Filename, Math.Round(result.FilesizeInMegabytes, 2),
+                                 result.AudioDuration.ToString("g"), result.TranscriptionLatency, Math.Round(result.RealtimeSpeedup, 0));
+
                     totalFilesize += result.FilesizeInMegabytes;
                     totalDuration = totalDuration.Add(result.AudioDuration);
+                    totalLatency += result.TranscriptionLatency;
                 }
-                table.AddRow($"TOTAL ({results.Count} files)", Math.Round(totalFilesize, 2), totalDuration.ToString("g"), timer.ElapsedMilliseconds);
+
+                var totalSpeedup = Math.Round(totalDuration.TotalMilliseconds / totalLatency, 0);
+                table.AddRow($"TOTAL ({results.Count} files)", Math.Round(totalFilesize, 2), totalDuration.ToString("g"), totalLatency, totalSpeedup);
                 table.Configure(o => o.EnableCount = false);
+
+                Console.WriteLine(TextConstants.TranscriptionComplete);
                 table.Write();
-                Console.WriteLine($"⟹    Transcribed {totalDuration.ToString("g")} of audio in {timer.ElapsedMilliseconds / 1000d} seconds: {Math.Round(totalDuration.TotalMilliseconds / timer.ElapsedMilliseconds, 0)}x speed-up");
             }
-            else
-                Console.WriteLine($"Handled {files.Count()} files in {timer.ElapsedMilliseconds / 1000} seconds.");
         }
     }
 }

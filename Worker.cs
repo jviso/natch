@@ -49,7 +49,8 @@ public class Worker
                         Filename = fileId,
                         FilesizeInMegabytes = bytes.Length / 1_048_576d,
                         TranscriptionLatency = timer.ElapsedMilliseconds,
-                        AudioDuration = duration
+                        AudioDuration = duration,
+                        RealtimeSpeedup = duration.TotalMilliseconds / timer.ElapsedMilliseconds
                     });
                 }
             }
