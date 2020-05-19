@@ -45,14 +45,16 @@ namespace Natch
             if (bool.Parse(config["demoMode"]))
             {
                 var totalFilesize = 0d;
+                var totalDuration = TimeSpan.Zero;
                 Console.WriteLine(TextConstants.TranscriptionComplete);
-                var table = new ConsoleTable("File", "Size (MB)", "Transcription Latency (ms)");
+                var table = new ConsoleTable("File", "Size (MB)", "Duration", "Transcription Latency (ms)");
                 foreach (var result in results)
                 {
-                    table.AddRow(result.Filename, Math.Round(result.Filesize, 2), result.TranscriptionLatency);
-                    totalFilesize += result.Filesize;
+                    table.AddRow(result.Filename, Math.Round(result.FilesizeInMegabytes, 2), result.AudioDuration.ToString("g"), result.TranscriptionLatency);
+                    totalFilesize += result.FilesizeInMegabytes;
+                    totalDuration = totalDuration.Add(result.AudioDuration);
                 }
-                table.AddRow("TOTAL", Math.Round(totalFilesize, 2), timer.ElapsedMilliseconds);
+                table.AddRow($"TOTAL ({results.Count} files)", Math.Round(totalFilesize, 2), totalDuration.ToString("g"), timer.ElapsedMilliseconds);
                 table.Configure(o => o.EnableCount = false);
                 table.Write();
             }
