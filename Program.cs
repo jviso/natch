@@ -46,12 +46,12 @@ namespace Natch
                 var totalFilesize = 0d;
                 var totalDuration = TimeSpan.Zero;
                 var totalLatency = timer.ElapsedMilliseconds;
-                var table = new ConsoleTable("File", "Size (MB)", "Duration", "Transcription Latency (ms)", "Realtime Factor");
+                var table = new ConsoleTable("File", "Size (MB)", "Duration", "Latency (ms)", "Realtime Factor");
 
                 foreach (var result in results)
                 {
                     table.AddRow(result.Filename, Math.Round(result.FilesizeInMegabytes, 2),
-                                 result.AudioDuration.ToString("g"), result.TranscriptionLatency, Math.Round(result.RealtimeSpeedup, 0));
+                                 result.AudioDuration.ToString("g"), result.Latency, Math.Round(result.RealtimeSpeedup, 0));
 
                     totalFilesize += result.FilesizeInMegabytes;
                     totalDuration = totalDuration.Add(result.AudioDuration);
