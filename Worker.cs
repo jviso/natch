@@ -30,14 +30,18 @@ public class Worker
                 using (var writer = File.CreateText(transcriptFilename))
                 {
                     var bytes = await File.ReadAllBytesAsync(audioFilename);
-                    var audioFile = new TagLib.Mpeg.AudioFile(audioFilename);
-                    var duration = audioFile.Properties.Duration;
+                    var tfile = TagLib.File.Create(audioFilename);
+                    var duration = tfile.Properties.Duration;
                     request.Content = new ByteArrayContent(bytes);
 
                     Console.WriteLine($"Sending file {fileId} to Deepgram Brain...");
                     timer.Reset();
                     timer.Start();
                     var response = await httpClient.SendAsync(request);
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK) {
+                        Console.WriteLine($"Failed to transcribe file: {audioFilename}");
+                        continue;
+                    }
                     timer.Stop();
                     Console.WriteLine($"Received transcript for file {fileId} from Deepgram Brain.");
 
